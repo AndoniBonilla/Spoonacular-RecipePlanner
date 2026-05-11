@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recipe Planner</title>
+
+  <!-- Preconnect hints tell the browser to open a connection to Google Fonts
+       early, before the actual stylesheet request fires, reducing load time. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Two font families:
+       - Inter       → body text (clean, highly legible sans-serif)
+       - Playfair Display → headings (editorial serif for visual warmth) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
+
+  <!-- Shared stylesheet used by all pages in the app -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── Navbar ──────────────────────────────────────────────────────────────
+       Sticky top bar present on every page.
+       #nav-auth starts empty; script.js fills it based on localStorage auth state:
+         - Logged in  → "Welcome, [name]" + Log Out button
+         - Guest      → "Log In" link -->
+  <nav class="navbar">
+    <a href="index.html" class="nav-logo">
+      <span class="nav-logo-icon">🍽️</span>
+      Recipe Planner
+    </a>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link active">Home</a>
+      <a href="saved.html" class="nav-link">Saved Recipes</a>
+      <!-- Populated dynamically by updateNavbar() in script.js -->
+      <div id="nav-auth" style="display:flex;align-items:center;gap:4px;margin-left:8px;"></div>
+    </div>
+  </nav>
+
+  <!-- ── Hero ────────────────────────────────────────────────────────────────
+       Full-width decorative banner at the top of the page. Pure presentational;
+       no interactive elements here. -->
+  <header class="hero">
+    <div class="hero-inner">
+      <span class="hero-icon">🍽️</span>
+      <h1>Recipe Planner</h1>
+      <p class="hero-subtitle">Tell us what's in your kitchen — we'll find what to cook.</p>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ── Search section ────────────────────────────────────────────────────
+         White card that contains:
+           1. A text input with live autocomplete dropdown (#autocomplete-list)
+           2. Ingredient tags (#tags-container) that appear after each selection
+           3. The "Find Recipes" button that triggers the API search
+         All logic for this section lives in script.js. -->
+    <div class="container">
+      <section class="search-card">
+        <label class="input-label" for="ingredient-input">Add ingredients</label>
+
+        <!-- search-wrapper uses position:relative so the dropdown (#autocomplete-list)
+             can be positioned absolutely directly beneath the input. -->
+        <div class="search-wrapper">
+          <input
+            id="ingredient-input"
+            type="text"
+            placeholder="e.g. chicken, garlic, lemon…"
+            autocomplete="off"
+          />
+          <!-- Dropdown list populated by renderDropdown() on each debounced keystroke.
+               The .open class toggles its visibility via CSS transitions. -->
+          <ul id="autocomplete-list"></ul>
+        </div>
+
+        <!-- Ingredient chips appear here as the user adds ingredients.
+             Each chip has a × button to remove itself. -->
+        <div id="tags-container"></div>
+
+        <!-- Triggers searchBtn click listener → calls /api/search with
+             the current ingredients[] array joined as a comma-separated string. -->
+        <button id="search-btn">
+          <span class="btn-icon">🔍</span> Find Recipes
+        </button>
+      </section>
+
+      <!-- Recipe cards are injected here by renderRecipes().
+           Uses a 2-column CSS Grid (collapses to 1 on small screens). -->
+      <div id="results"></div>
+
+      <!-- Detail view is hidden by default (.hidden = display:none).
+           fetchRecipeDetail() removes the hidden class and fills this with
+           the full recipe layout including stats, diet badges, and ingredients. -->
+      <div id="detail-view" class="hidden"></div>
+    </div>
+
+    <!-- ── How it works ────────────────────────────────────────────────────
+         Static informational section — no JS interaction.
+         Three step cards laid out in a 3-column CSS Grid. -->
+    <div class="section-wrapper how-it-works">
+      <h2 class="section-title">How it works</h2>
+      <div class="steps">
+        <div class="step">
+          <span class="step-num">1</span>
+          <span class="step-icon">🥕</span>
+          <h3>Enter your ingredients</h3>
+          <p>Type what you have at home and add them as tags — one ingredient at a time.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">2</span>
+          <span class="step-icon">🔍</span>
+          <h3>We find matching recipes</h3>
+          <p>Our engine scans thousands of recipes and surfaces the best matches for your pantry.</p>
+        </div>
+        <div class="step">
+          <span class="step-num">3</span>
+          <span class="step-icon">🍳</span>
+          <h3>Cook something delicious</h3>
+          <p>Pick a recipe, check the full ingredient list, and get cooking tonight.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Featured Recipes ────────────────────────────────────────────────
+         Grid starts empty. loadFeaturedRecipes() in script.js calls
+         /api/search with a preset list of popular ingredients and injects
+         real recipe cards here. If that call fails, fallback gradient
+         placeholder cards are rendered instead. -->
+    <div class="section-wrapper">
+      <h2 class="section-title">Featured Recipes</h2>
+      <div class="featured-grid" id="featured-recipes-grid"></div>
+    </div>
+
+  </main>
+
+  <!-- script.js is loaded at the very end of <body> so that all DOM elements
+       above are already parsed and available when the script runs. -->
+  <script src="script.js"></script>
+</body>
+</html>

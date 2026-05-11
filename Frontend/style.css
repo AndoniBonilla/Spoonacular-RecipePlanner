@@ -1,0 +1,976 @@
+/* Import Google Fonts at the very top before any other rules.
+   Inter     → used for all body/UI text (clean, modern sans-serif).
+   Playfair Display → used for headings (editorial serif that adds warmth). */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap');
+
+/* ── Box-sizing reset ────────────────────────────────────────────────────────
+   By default, browsers add padding and border ON TOP of an element's width.
+   Setting box-sizing: border-box on everything makes width/height
+   include padding and border — much more predictable to work with. */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Design tokens (CSS custom properties) ───────────────────────────────────
+   Centralising colours, shadows, and radius here means we change one value
+   to restyle the whole app — no hunting for hardcoded hex codes. */
+:root {
+  /* Green palette — darkest to lightest */
+  --green-dark:  #1b4332;
+  --green-mid:   #2d6a4f;
+  --green-light: #52b788;
+  --green-pale:  #d8f3dc;  /* used for tag/badge backgrounds */
+
+  --accent:      #f4845f;  /* warm orange — reserved for future accent elements */
+  --bg:          #f4f7f4;  /* page background (very light green-grey) */
+  --surface:     #ffffff;  /* card/input backgrounds */
+  --text:        #1c1c1e;  /* primary text (near-black) */
+  --text-soft:   #6b7280;  /* secondary/muted text */
+  --border:      #e4e9e4;  /* subtle borders on inputs and cards */
+
+  /* Box shadows — sm for resting state, md for elevated/hover state */
+  --shadow-sm:   0 2px 8px rgba(0,0,0,0.07);
+  --shadow-md:   0 6px 24px rgba(0,0,0,0.10);
+
+  --radius:      12px;     /* consistent corner radius for cards */
+}
+
+/* ── Base body styles ────────────────────────────────────────────────────────
+   Set the font stack and background for the entire page.
+   -apple-system / BlinkMacSystemFont are system-font fallbacks for Apple devices
+   in case the Google Font fails to load. */
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh; /* ensures the background fills at least the full viewport */
+}
+
+/* ── Navbar ──────────────────────────────────────────────────────────────────
+   Dark green sticky bar that remains visible at the top as the user scrolls.
+   z-index: 200 keeps it above the autocomplete dropdown (z-index: 100). */
+
+.navbar {
+  background: #0d2b1e;                           /* deeper green than the hero */
+  border-bottom: 1px solid rgba(255,255,255,0.07); /* subtle separator */
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;                               /* sticks to the viewport top */
+  top: 0;
+  z-index: 200;
+}
+
+/* Brand logo link — uses Playfair Display for the editorial serif feel. */
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #fff;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+  transition: opacity 0.15s;
+}
+
+.nav-logo:hover {
+  opacity: 0.88; /* subtle dim on hover — avoids a jarring colour change */
+}
+
+.nav-logo-icon {
+  font-size: 1.2rem;
+}
+
+/* Container that holds the page links and the #nav-auth slot. */
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Individual nav link — muted white that brightens on hover. */
+.nav-link {
+  color: rgba(255,255,255,0.72);
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 7px 13px;
+  border-radius: 8px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.nav-link:hover {
+  background: rgba(255,255,255,0.09);
+  color: #fff;
+}
+
+/* .active marks the current page's link with a slightly brighter background. */
+.nav-link.active {
+  color: #fff;
+  background: rgba(255,255,255,0.12);
+}
+
+/* ── Hero ────────────────────────────────────────────────────────────────────
+   Full-width banner with a layered gradient background:
+     1. Radial green glow (top-right)
+     2. Radial dark overlay (bottom-left)
+     3. Linear base gradient (dark → mid green)
+   The ::before pseudo-element adds a subtle repeating SVG cross pattern
+   for visual texture without an external image file. */
+
+.hero {
+  background:
+    radial-gradient(ellipse at 75% 15%, rgba(82,183,136,0.28) 0%, transparent 55%),
+    radial-gradient(ellipse at 20% 85%, rgba(13,43,30,0.65) 0%, transparent 50%),
+    linear-gradient(145deg, #0d2b1e 0%, #1b4332 40%, #2d6a4f 72%, #40916c 100%);
+  padding: 72px 16px 64px;
+  text-align: center;
+  position: relative;  /* needed for ::before absolute positioning */
+  overflow: hidden;    /* clips the pattern at the hero boundaries */
+}
+
+/* SVG data URI pattern — a repeating + cross shape at low opacity.
+   pointer-events: none lets clicks pass through to elements beneath. */
+.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%2352b788' fill-opacity='0.06'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* Animate the hero content upwards on page load. */
+.hero-inner {
+  position: relative; /* sits on top of the ::before pattern */
+  animation: fadeUp 0.6s ease both;
+}
+
+.hero-icon {
+  font-size: 3.2rem;
+  margin-bottom: 18px;
+  display: block;
+  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+}
+
+.hero h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2.8rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #ffffff;
+  margin-bottom: 12px;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.18);
+}
+
+.hero-subtitle {
+  font-size: 1.05rem;
+  color: rgba(255,255,255,0.72);
+  max-width: 380px;
+  margin: 0 auto;   /* horizontally centre the capped-width text */
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* ── Layout ──────────────────────────────────────────────────────────────────
+   Two wrapper widths used across the app:
+     .container     → narrow (720px) — used for the search card and results
+     .section-wrapper → wider (960px) — used for featured/how-it-works sections */
+
+.container {
+  max-width: 720px;
+  margin: 0 auto;       /* horizontally centred */
+  padding: 48px 16px 56px;
+  animation: fadeUp 0.6s 0.1s ease both; /* slight delay after hero animation */
+}
+
+.section-wrapper {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 16px 72px;
+}
+
+/* Shared heading style for "How it works" and "Featured Recipes" titles. */
+.section-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 36px;
+  text-align: center;
+}
+
+/* ── Search card ─────────────────────────────────────────────────────────────
+   White rounded card that wraps the ingredient input, tag chips, and
+   the Find Recipes button. */
+
+.search-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 32px 32px 28px;
+  margin-bottom: 36px;
+}
+
+/* Small uppercase label above inputs — used on the search card and auth forms. */
+.input-label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--text-soft);
+  margin-bottom: 10px;
+}
+
+/* ── Search input & dropdown ─────────────────────────────────────────────────
+   position: relative on .search-wrapper lets the #autocomplete-list be
+   positioned absolutely directly below the input with top: calc(100% + 6px). */
+
+.search-wrapper {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+#ingredient-input {
+  width: 100%;
+  padding: 13px 16px;
+  font-size: 1rem;
+  font-family: inherit;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: #fafafa;
+  outline: none;          /* remove default browser focus ring */
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  color: var(--text);
+}
+
+#ingredient-input::placeholder {
+  color: #aab4aa; /* muted green-grey for the placeholder text */
+}
+
+/* On focus: highlight border and add a soft green glow ring. */
+#ingredient-input:focus {
+  border-color: var(--green-light);
+  box-shadow: 0 0 0 3px rgba(82,183,136,0.18);
+  background: #fff;
+}
+
+/* Autocomplete dropdown — absolutely positioned below the input.
+   Hidden by default (opacity: 0, pointer-events: none) and animated
+   in by adding the .open class from JavaScript. */
+#autocomplete-list {
+  position: absolute;
+  top: calc(100% + 6px); /* 6px gap between input bottom and dropdown top */
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+  list-style: none;
+  z-index: 100;            /* above page content, below the navbar (200) */
+  overflow: hidden;        /* clips items to the rounded corners */
+  opacity: 0;
+  transform: translateY(-6px); /* starts slightly above its final position */
+  pointer-events: none;        /* not clickable when hidden */
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+/* When .open is added by JS, the dropdown slides down and becomes interactive. */
+#autocomplete-list.open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Each suggestion row: ingredient thumbnail on the left, name on the right. */
+.autocomplete-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.autocomplete-item:hover {
+  background: var(--green-pale); /* soft green highlight on hover */
+}
+
+.autocomplete-item img {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--bg); /* placeholder colour while the image loads */
+}
+
+.autocomplete-item span {
+  font-size: 0.95rem;
+  text-transform: capitalize;
+  color: var(--text);
+}
+
+/* ── Ingredient tags ─────────────────────────────────────────────────────────
+   Flex container that wraps chips onto multiple lines as more are added.
+   min-height: 0 prevents a fixed gap when empty. */
+
+#tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  min-height: 0;
+}
+
+/* Each ingredient chip — pill-shaped with a pale green background.
+   The popIn animation gives a satisfying scale-in effect when added. */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--green-pale);
+  color: var(--green-mid);
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 6px 10px 6px 14px; /* extra left padding balances the × button on the right */
+  border-radius: 20px;
+  text-transform: capitalize;
+  animation: popIn 0.18s ease both;
+}
+
+/* The × remove button inside each tag. */
+.remove-tag {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--green-mid);
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0;
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+
+.remove-tag:hover {
+  opacity: 1; /* fully opaque on hover so it's clearly actionable */
+}
+
+/* ── Search button ───────────────────────────────────────────────────────────
+   Full-width gradient button. Lifts on hover and slightly shrinks on click
+   to give tactile feedback. */
+
+#search-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 15px;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: inherit;
+  background: linear-gradient(135deg, var(--green-mid) 0%, var(--green-light) 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s ease, box-shadow 0.2s;
+  box-shadow: 0 4px 14px rgba(45,106,79,0.35);
+  letter-spacing: 0.2px;
+}
+
+#search-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);                   /* subtle lift */
+  box-shadow: 0 8px 24px rgba(45,106,79,0.45);  /* deeper shadow when lifted */
+}
+
+#search-btn:active {
+  transform: scale(0.98) translateY(0); /* press-down effect */
+  box-shadow: 0 4px 14px rgba(45,106,79,0.35);
+}
+
+.btn-icon {
+  font-size: 1rem;
+}
+
+/* ── Recipe grid ─────────────────────────────────────────────────────────────
+   2-column grid for the search results.
+   Collapses to 1 column on narrow screens (see responsive section). */
+
+#results {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 36px;
+}
+
+/* Individual recipe card — white surface that lifts on hover.
+   overflow: hidden clips the image to the card's rounded corners. */
+.recipe-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  animation: fadeUp 0.3s ease both;
+  display: flex;
+  flex-direction: column;
+}
+
+.recipe-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.13);
+}
+
+/* The recipe thumbnail image at the top of each card. */
+.recipe-card > img {
+  width: 100%;
+  height: 164px;
+  object-fit: cover; /* crops the image to fill the fixed height without distorting */
+  display: block;
+}
+
+/* The white area below the image containing the title and save button. */
+.card-body {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1; /* stretches to fill remaining card height so buttons align at the bottom */
+}
+
+.card-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+/* ── Save button ─────────────────────────────────────────────────────────────
+   Outlined green button by default; fills with green when the recipe is saved.
+   align-self: flex-start prevents it from stretching to full card width. */
+
+.save-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: inherit;
+  border: 2px solid var(--green-light);
+  color: var(--green-mid);
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border-color 0.18s, transform 0.1s;
+  align-self: flex-start;
+  letter-spacing: 0.1px;
+}
+
+.save-btn:hover {
+  background: var(--green-pale);
+  border-color: var(--green-mid);
+}
+
+/* .saved state — solid green fill when a recipe has been bookmarked. */
+.save-btn.saved {
+  background: var(--green-light);
+  border-color: var(--green-light);
+  color: #fff;
+}
+
+.save-btn.saved:hover {
+  background: var(--green-mid);
+  border-color: var(--green-mid);
+  color: #fff;
+}
+
+.save-btn:active {
+  transform: scale(0.96); /* brief press-down effect */
+}
+
+/* ── How it works ────────────────────────────────────────────────────────────
+   3-column grid of numbered step cards. Each card has a badge in the
+   top-left corner showing the step number. */
+
+.how-it-works {
+  padding-top: 8px; /* slight top gap to separate from the results grid above */
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+/* Individual step card. position: relative is needed for the absolutely
+   positioned .step-num badge in the corner. */
+.step {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 32px 24px 28px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.step:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
+.step-icon {
+  font-size: 2.4rem;
+  margin-bottom: 14px;
+  display: block;
+}
+
+/* Circular numbered badge pinned to the top-left of each step card. */
+.step-num {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 26px;
+  height: 26px;
+  background: var(--green-pale);
+  color: var(--green-mid);
+  border-radius: 50%;
+  font-size: 0.78rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step h3 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.step p {
+  font-size: 0.875rem;
+  color: var(--text-soft);
+  line-height: 1.55;
+}
+
+/* ── Featured recipes ────────────────────────────────────────────────────────
+   3-column grid populated by loadFeaturedRecipes() in script.js.
+   Collapses to 2 on tablet and 1 on mobile (see responsive section). */
+
+.featured-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+/* Featured card — same lift-on-hover behaviour as recipe cards. */
+.featured-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  overflow: hidden; /* keeps image inside rounded corners */
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.featured-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.11);
+}
+
+/* Shared class for both the <img> (real API card) and the <div>
+   (fallback gradient card) at the top of each featured card. */
+.featured-img {
+  width: 100%;
+  height: 150px;
+  display: block;
+}
+
+/* Tighten up the card body padding for the more compact featured layout. */
+.featured-card .card-body {
+  padding: 14px 16px 18px;
+  gap: 8px;
+}
+
+.featured-card .card-title {
+  margin-bottom: 2px;
+}
+
+/* "View Recipe" text link styled to match the card's green accent colour. */
+.view-label {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--green-mid);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* ── Detail view ─────────────────────────────────────────────────────────────
+   Full-width panel injected below the search results when a recipe card is
+   clicked. Hidden by default with the .hidden utility class. */
+
+#detail-view {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  margin-bottom: 40px;
+  animation: fadeUp 0.3s ease both;
+}
+
+/* The .hidden class is toggled by JS — hides the panel without removing it
+   from the DOM (so its content is preserved if we need to re-show it). */
+#detail-view.hidden {
+  display: none;
+}
+
+/* ← Back to results button pinned to the top of the detail panel. */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--green-mid);
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 18px 22px 0; /* top padding only — sits flush with the panel edge */
+  transition: color 0.15s;
+}
+
+.back-btn:hover {
+  color: var(--green-dark);
+}
+
+/* Inner content padding inside the detail panel. */
+.detail-inner {
+  padding: 22px 24px 28px;
+}
+
+/* Hero image at the top of the detail view — capped height to avoid
+   overly tall images taking over the viewport. */
+.detail-img {
+  width: 100%;
+  max-height: 340px;
+  object-fit: cover;
+  border-radius: 10px;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.detail-inner h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+/* Flex row of diet badge chips (Vegetarian, Vegan, Gluten Free, Dairy Free).
+   Only rendered for recipes where the corresponding flag is true. */
+.diet-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+/* Individual diet badge pill — pale green background, dark green text. */
+.diet-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 11px;
+  border-radius: 20px;
+  background: var(--green-pale);
+  color: var(--green-dark);
+  letter-spacing: 0.2px;
+}
+
+/* 4-column grid of stat boxes (ready time, servings, health score, price).
+   Collapses to 2 columns on narrow screens. */
+.detail-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 26px;
+}
+
+/* Each individual stat tile. */
+.stat {
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 14px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: center;
+}
+
+/* Small label above the number (e.g. "READY IN"). */
+.stat-label {
+  font-size: 0.7rem;
+  color: var(--text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+/* The actual numeric value — large and bold in green. */
+.stat-value {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--green-mid);
+}
+
+.detail-inner h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+/* Ingredient list — vertical stack of lightly tinted rows.
+   list-style: none removes the default browser bullet points. */
+.ingredient-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ingredient-list li {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #444;
+  padding: 8px 14px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+
+/* ── Saved page ──────────────────────────────────────────────────────────────
+   3-column grid for the bookmarked recipe cards on saved.html.
+   Mirrors the featured grid layout at the same breakpoints. */
+
+.saved-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+/* Saved recipe card — same basic card structure as a search result card. */
+.saved-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  animation: fadeUp 0.3s ease both;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.saved-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+}
+
+.saved-card img {
+  width: 100%;
+  height: 164px;
+  object-fit: cover;
+  display: block;
+}
+
+.saved-card .card-body {
+  padding: 14px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+/* Red "Remove" button — contrasts with the green save button on other pages
+   to signal a destructive action. Fills red on hover for clear feedback. */
+.remove-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: inherit;
+  border: 2px solid #e63946;
+  color: #e63946;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, transform 0.1s;
+  align-self: flex-start;
+}
+
+.remove-btn:hover {
+  background: #e63946;
+  color: #fff;
+}
+
+.remove-btn:active {
+  transform: scale(0.96);
+}
+
+/* Empty state shown when the user has no saved recipes yet.
+   Contains a message and a CTA link back to the home page. */
+.empty-state {
+  text-align: center;
+  padding: 80px 24px;
+  color: var(--text-soft);
+}
+
+.empty-state p {
+  font-size: 1.05rem;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+/* The "Find Recipes" CTA link — styled to look like the main search button. */
+.empty-state a {
+  display: inline-block;
+  padding: 13px 30px;
+  background: linear-gradient(135deg, var(--green-mid), var(--green-light));
+  color: #fff;
+  text-decoration: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 14px rgba(45,106,79,0.35);
+  transition: opacity 0.2s, transform 0.15s;
+}
+
+.empty-state a:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+/* ── Utility ─────────────────────────────────────────────────────────────────
+   Status messages used inside the #results grid.
+   grid-column: 1 / -1 makes them span the full grid width regardless of
+   how many columns are active (avoids a half-width message in a 2-col grid). */
+
+.loading,
+.empty,
+.error {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--text-soft);
+  font-size: 0.95rem;
+  padding: 32px 0;
+}
+
+/* Override the muted colour for error messages — red draws attention. */
+.error {
+  color: #c0392b;
+}
+
+/* ── Animations ──────────────────────────────────────────────────────────────
+   fadeUp — slides content up from 14px below and fades it in.
+             Used on hero text, cards, and section containers.
+   popIn  — scales ingredient tags in from 85% when they appear. */
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.85); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────────────
+   Two breakpoints:
+     768px  → tablet:  collapse 3-col grids to 2-col
+     520px  → mobile:  collapse everything to single column, shrink hero text */
+
+@media (max-width: 768px) {
+  /* How it works: stack the three steps vertically and centre them. */
+  .steps {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  /* Featured and saved grids: 3 → 2 columns */
+  .featured-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .saved-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  /* Tighten hero vertical padding on small screens. */
+  .hero {
+    padding: 52px 16px 48px;
+  }
+
+  /* Reduce the headline font size so it fits on one line. */
+  .hero h1 {
+    font-size: 2.1rem;
+  }
+
+  /* Reduce search card internal padding on small screens. */
+  .search-card {
+    padding: 22px 18px;
+  }
+
+  /* Collapse recipe search results and detail stats to a single column. */
+  #results {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Collapse featured and saved grids to a single column on mobile. */
+  .featured-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .saved-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Reduce navbar horizontal padding so logo and links fit on small screens. */
+  .navbar {
+    padding: 0 16px;
+  }
+
+  .nav-logo {
+    font-size: 1rem;
+  }
+}

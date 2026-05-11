@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Saved Recipes — Recipe Planner</title>
+
+  <!-- Google Fonts — same two families used across all pages for visual consistency. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
+
+  <!-- Shared stylesheet — contains .saved-grid, .saved-card, .remove-btn, etc. -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── Navbar ──────────────────────────────────────────────────────────────
+       Same sticky navbar structure as the other pages.
+       "Saved Recipes" link has .active to highlight the current page.
+       #nav-auth is filled by updateNavbar() in the inline script below. -->
+  <nav class="navbar">
+    <a href="index.html" class="nav-logo">
+      <span class="nav-logo-icon">🍽️</span>
+      Recipe Planner
+    </a>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="saved.html" class="nav-link active">Saved Recipes</a>
+      <!-- Populated dynamically based on localStorage auth state. -->
+      <div id="nav-auth" style="display:flex;align-items:center;gap:4px;margin-left:8px;"></div>
+    </div>
+  </nav>
+
+  <!-- ── Hero ────────────────────────────────────────────────────────────────
+       Bookmark-themed hero banner — purely decorative, no interaction. -->
+  <header class="hero">
+    <div class="hero-inner">
+      <span class="hero-icon">🔖</span>
+      <h1>Saved Recipes</h1>
+      <p class="hero-subtitle">Your personal collection of recipes to cook.</p>
+    </div>
+  </header>
+
+  <main>
+    <!-- ── Saved grid container ──────────────────────────────────────────────
+         Starts empty. renderSaved() injects either:
+           a) A .saved-grid of recipe cards, or
+           b) An .empty-state block with a CTA to the home page. -->
+    <div class="section-wrapper" style="padding-top: 48px;">
+      <div id="saved-container"></div>
+    </div>
+  </main>
+
+  <script>
+    // ── Auth helpers ──────────────────────────────────────────────────────────
+    // These functions are duplicated from script.js because each HTML page runs
+    // in its own JS context — saved.html doesn't load script.js.
+
+    // Returns the currently logged-in user object or null for guests.
+    function getCurrentUser() {
+      return JSON.parse(localStorage.getItem('currentUser') || 'null');
+    }
+
+    // Clears the session and reloads the page to reset all auth-dependent UI.
+    function handleLogout() {
+      localStorage.removeItem('currentUser');
+      window.location.reload();
+    }
+
+    // Populates #nav-auth based on whether a user is logged in.
+    // Logged-in: shows "Welcome, [name]" and a Log Out button.
+    // Guest: shows a "Log In" link.
+    function updateNavbar() {
+      const navAuth = document.getElementById('nav-auth');
+      if (!navAuth) return;
+      const user = getCurrentUser();
+      if (user) {
+        navAuth.innerHTML = `
+          <span style="color:rgba(255,255,255,0.82);font-size:0.88rem;font-weight:500;padding:0 4px;">Welcome, ${user.username}</span>
+          <button onclick="handleLogout()" style="background:none;border:1.5px solid rgba(255,255,255,0.35);color:rgba(255,255,255,0.82);border-radius:7px;padding:5px 11px;font-size:0.84rem;font-weight:600;cursor:pointer;font-family:inherit;">Log Out</button>
+        `;
+      } else {
+        navAuth.innerHTML = `<a href="login.html" class="nav-link">Log In</a>`;
+      }
+    }
+
+    // ── Saved recipes helpers (user-scoped) ───────────────────────────────────
+    // Logged-in users get an email-scoped key so each account's list
+    // is isolated. Guests share the generic 'savedRecipes' key.
+
+    function getSavedKey() {
+      const user = getCurrentUser();
+      return user ? `savedRecipes_${user.email}` : 'savedRecipes';
+    }
+
+    // Reads the saved recipe array from localStorage (defaults to empty array).
+    function getSavedRecipes() {
+      return JSON.parse(localStorage.getItem(getSavedKey()) || '[]');
+    }
+
+    // Writes the updated array back to localStorage.
+    function setSavedRecipes(recipes) {
+      localStorage.setItem(getSavedKey(), JSON.stringify(recipes));
+    }
+
+    // ── Render ────────────────────────────────────────────────────────────────
+
+    // Builds the full saved-recipe grid from localStorage data.
+    // Called on page load and again after each recipe is removed.
+    function renderSaved() {
+      const container = document.getElementById('saved-container');
+      const saved = getSavedRecipes();
+
+      // If there are no saved recipes, show a friendly empty state
+      // with a link back to the home page to find some.
+      if (!saved.length) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <p>No saved recipes yet. Go find some!</p>
+            <a href="index.html">Find Recipes</a>
+          </div>
+        `;
+        return;
+      }
+
+      // Create a fresh grid wrapper and populate it with one card per recipe.
+      container.innerHTML = '<div class="saved-grid"></div>';
+      const grid = container.querySelector('.saved-grid');
+
+      saved.forEach(recipe => {
+        const card = document.createElement('div');
+        card.className = 'saved-card';
+        card.style.cursor = 'pointer';
+        card.innerHTML = `
+          <img src="${recipe.image}" alt="${recipe.title}" />
+          <div class="card-body">
+            <div class="card-title">${recipe.title}</div>
+            <button class="remove-btn" data-id="${recipe.id}">Remove</button>
+          </div>
+        `;
+
+        // Clicking the card navigates to the home page and passes the recipe id
+        // as a query param (?recipe=...). script.js reads that param on load
+        // and automatically opens the detail view for a seamless experience.
+        card.addEventListener('click', () => {
+          window.location.href = `index.html?recipe=${recipe.id}`;
+        });
+
+        // The Remove button deletes the recipe from localStorage and re-renders
+        // the grid without a page reload. stopPropagation() prevents the card's
+        // own click handler from also firing (which would navigate away).
+        card.querySelector('.remove-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          const updated = getSavedRecipes().filter(r => r.id !== recipe.id);
+          setSavedRecipes(updated);
+          renderSaved(); // re-render to reflect the removed card
+        });
+
+        grid.appendChild(card);
+      });
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+    // Run both initialisation functions immediately when the page loads.
+
+    updateNavbar(); // fill the navbar auth slot
+    renderSaved();  // populate the saved recipe grid
+  </script>
+</body>
+</html>

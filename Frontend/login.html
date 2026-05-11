@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Log In — Recipe Planner</title>
+
+  <!-- Google Fonts — same two families used across all pages. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet" />
+
+  <!-- Shared stylesheet for layout, navbar, hero, buttons, etc. -->
+  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    /* ── Auth page styles ──────────────────────────────────────────────────
+       These are page-specific and live here rather than style.css because
+       the auth card layout is only needed on login.html. */
+
+    /* Narrow centred column that holds the auth card. */
+    .auth-container {
+      max-width: 460px;
+      margin: 0 auto;
+      padding: 48px 16px 80px;
+      animation: fadeUp 0.5s ease both; /* inherits the keyframe from style.css */
+    }
+
+    /* White rounded card that wraps the tab bar and both forms. */
+    .auth-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      overflow: hidden; /* clips tab bar and form to the rounded corners */
+    }
+
+    /* ── Tabs ────────────────────────────────────────────────────────────── */
+
+    /* Row of two tab buttons ("Log In" / "Sign Up") across the top of the card. */
+    .tab-bar {
+      display: flex;
+      border-bottom: 1.5px solid var(--border);
+    }
+
+    /* Each tab takes equal width. The active tab gets a coloured bottom border
+       that sits on top of .tab-bar's bottom border via margin-bottom: -1.5px. */
+    .tab-btn {
+      flex: 1;
+      padding: 16px;
+      background: none;
+      border: none;
+      border-bottom: 2.5px solid transparent; /* reserve space for active indicator */
+      margin-bottom: -1.5px;                  /* overlap the card's bottom border */
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      color: var(--text-soft);
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    /* .active state: green text and a green underline indicator. */
+    .tab-btn.active {
+      color: var(--green-mid);
+      border-bottom-color: var(--green-light);
+    }
+
+    /* ── Form layout ─────────────────────────────────────────────────────── */
+
+    /* The <form> element itself — provides inner padding for the fields. */
+    .auth-form {
+      padding: 28px 28px 32px;
+    }
+
+    /* .hidden is toggled by the tab-switching logic to show/hide each form
+       without removing it from the DOM (so field values are preserved on switch). */
+    .auth-form.hidden {
+      display: none;
+    }
+
+    /* Wrapper around each label + input pair. */
+    .auth-field {
+      margin-bottom: 18px;
+    }
+
+    /* Text inputs — consistent with the search card input style. */
+    .auth-input {
+      display: block;
+      width: 100%;
+      padding: 12px 14px;
+      margin-top: 6px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      background: #fafafa;
+      outline: none;
+      color: var(--text);
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+
+    /* Green focus ring — same treatment as the ingredient input on the home page. */
+    .auth-input:focus {
+      border-color: var(--green-light);
+      box-shadow: 0 0 0 3px rgba(82,183,136,0.18);
+      background: #fff;
+    }
+
+    /* Full-width submit button — styled identically to the "Find Recipes" button. */
+    .auth-submit {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 14px;
+      margin-top: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      font-family: inherit;
+      background: linear-gradient(135deg, var(--green-mid) 0%, var(--green-light) 100%);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(45,106,79,0.35);
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      letter-spacing: 0.2px;
+    }
+
+    .auth-submit:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(45,106,79,0.40);
+    }
+
+    .auth-submit:active {
+      transform: scale(0.98);
+    }
+
+    /* ── Error banner ────────────────────────────────────────────────────── */
+
+    /* Red inline error message that appears below the submit button.
+       Hidden by default; JS adds .visible to show it. */
+    .auth-error {
+      display: none;
+      margin-top: 14px;
+      padding: 10px 14px;
+      font-size: 0.875rem;
+      color: #c0392b;
+      background: #fdf0ef;
+      border-left: 3px solid #e63946;
+      border-radius: 8px;
+    }
+
+    .auth-error.visible {
+      display: block;
+    }
+
+    /* ── Navbar auth elements ────────────────────────────────────────────── */
+    /* On login.html the #nav-auth div doesn't have the inline style tag
+       that the other pages use, so we set its flex layout here instead. */
+
+    #nav-auth {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 8px;
+    }
+
+    /* "Welcome, [name]" text next to the Log Out button when already logged in. */
+    .nav-welcome {
+      color: rgba(255,255,255,0.82);
+      font-size: 0.88rem;
+      font-weight: 500;
+      padding: 0 4px;
+    }
+
+    /* Log Out button in the navbar — outlined style on the dark background. */
+    .nav-logout-btn {
+      background: none;
+      border: 1.5px solid rgba(255,255,255,0.35);
+      color: rgba(255,255,255,0.82);
+      border-radius: 7px;
+      padding: 5px 11px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .nav-logout-btn:hover {
+      background: rgba(255,255,255,0.10);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Navbar ──────────────────────────────────────────────────────────────
+       No .active class on either link — the login page is its own destination.
+       #nav-auth is populated by updateNavbar() in the script below. -->
+  <nav class="navbar">
+    <a href="index.html" class="nav-logo">
+      <span class="nav-logo-icon">🍽️</span>
+      Recipe Planner
+    </a>
+    <div class="nav-links">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="saved.html" class="nav-link">Saved Recipes</a>
+      <div id="nav-auth"></div>
+    </div>
+  </nav>
+
+  <!-- ── Hero ────────────────────────────────────────────────────────────────
+       Key-themed hero banner that introduces the auth section. -->
+  <header class="hero">
+    <div class="hero-inner">
+      <span class="hero-icon">🔑</span>
+      <h1>Welcome Back</h1>
+      <p class="hero-subtitle">Log in to access your saved recipes, or create a new account.</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="auth-container">
+      <div class="auth-card">
+
+        <!-- ── Tab bar ───────────────────────────────────────────────────────
+             Two buttons that switch between the Log In and Sign Up forms.
+             Only one form is visible at a time; the other has .hidden applied. -->
+        <div class="tab-bar">
+          <button class="tab-btn active" id="login-tab">Log In</button>
+          <button class="tab-btn" id="signup-tab">Sign Up</button>
+        </div>
+
+        <!-- ── Log In form ───────────────────────────────────────────────────
+             Shown by default (no .hidden class).
+             novalidate disables browser native validation so we handle it in JS
+             with custom error messages instead of browser popups. -->
+        <form class="auth-form" id="login-form" novalidate>
+          <div class="auth-field">
+            <label class="input-label" for="login-email">Email</label>
+            <input class="auth-input" type="email" id="login-email" placeholder="you@example.com" autocomplete="email" required />
+          </div>
+          <div class="auth-field">
+            <label class="input-label" for="login-password">Password</label>
+            <input class="auth-input" type="password" id="login-password" placeholder="Your password" autocomplete="current-password" required />
+          </div>
+          <button type="submit" class="auth-submit">Log In</button>
+          <!-- Error message div — starts hidden, shown via .visible when validation fails. -->
+          <div class="auth-error" id="login-error"></div>
+        </form>
+
+        <!-- ── Sign Up form ──────────────────────────────────────────────────
+             Hidden by default (.hidden). Switching tabs removes .hidden from
+             this form and adds it to the Log In form.
+             Four fields: username, email, password, confirm password. -->
+        <form class="auth-form hidden" id="signup-form" novalidate>
+          <div class="auth-field">
+            <label class="input-label" for="signup-username">Username</label>
+            <input class="auth-input" type="text" id="signup-username" placeholder="Your display name" autocomplete="username" required />
+          </div>
+          <div class="auth-field">
+            <label class="input-label" for="signup-email">Email</label>
+            <input class="auth-input" type="email" id="signup-email" placeholder="you@example.com" autocomplete="email" required />
+          </div>
+          <div class="auth-field">
+            <label class="input-label" for="signup-password">Password</label>
+            <input class="auth-input" type="password" id="signup-password" placeholder="Choose a password" autocomplete="new-password" required />
+          </div>
+          <div class="auth-field">
+            <label class="input-label" for="signup-confirm">Confirm Password</label>
+            <input class="auth-input" type="password" id="signup-confirm" placeholder="Repeat your password" autocomplete="new-password" required />
+          </div>
+          <button type="submit" class="auth-submit">Sign Up</button>
+          <!-- Error message div for sign-up validation errors. -->
+          <div class="auth-error" id="signup-error"></div>
+        </form>
+
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    // Returns the logged-in user object from localStorage, or null if nobody is logged in.
+    function getCurrentUser() {
+      return JSON.parse(localStorage.getItem('currentUser') || 'null');
+    }
+
+    // Clears the session and reloads so the navbar and page state reset.
+    function handleLogout() {
+      localStorage.removeItem('currentUser');
+      window.location.reload();
+    }
+
+    // Populates #nav-auth — if someone is already logged in and visits this page,
+    // they'll still see their name and a Log Out option in the navbar.
+    function updateNavbar() {
+      const navAuth = document.getElementById('nav-auth');
+      if (!navAuth) return;
+      const user = getCurrentUser();
+      if (user) {
+        // Already logged in: show welcome text and Log Out button.
+        navAuth.innerHTML = `
+          <span class="nav-welcome">Welcome, ${user.username}</span>
+          <button class="nav-logout-btn" onclick="handleLogout()">Log Out</button>
+        `;
+      } else {
+        // Guest on the login page: highlight "Log In" as the active link.
+        navAuth.innerHTML = `<a href="login.html" class="nav-link active">Log In</a>`;
+      }
+    }
+
+    // ── Tab switching ─────────────────────────────────────────────────────────
+    // Clicking a tab:
+    //   1. Marks it .active (green underline) and removes .active from the other
+    //   2. Removes .hidden from the corresponding form
+    //   3. Adds .hidden to the other form
+    //   4. Clears any visible error message from the previous form
+
+    const loginTab    = document.getElementById('login-tab');
+    const signupTab   = document.getElementById('signup-tab');
+    const loginForm   = document.getElementById('login-form');
+    const signupForm  = document.getElementById('signup-form');
+    const loginError  = document.getElementById('login-error');
+    const signupError = document.getElementById('signup-error');
+
+    loginTab.addEventListener('click', () => {
+      loginTab.classList.add('active');
+      signupTab.classList.remove('active');
+      loginForm.classList.remove('hidden');
+      signupForm.classList.add('hidden');
+      loginError.classList.remove('visible'); // clear any prior error
+    });
+
+    signupTab.addEventListener('click', () => {
+      signupTab.classList.add('active');
+      loginTab.classList.remove('active');
+      signupForm.classList.remove('hidden');
+      loginForm.classList.add('hidden');
+      signupError.classList.remove('visible'); // clear any prior error
+    });
+
+    // ── Sign Up ───────────────────────────────────────────────────────────────
+
+    signupForm.addEventListener('submit', (e) => {
+      // Prevent the browser from doing a real form submission (page reload).
+      e.preventDefault();
+      signupError.classList.remove('visible'); // hide any previous error
+
+      // Read and sanitise all four field values.
+      const username = document.getElementById('signup-username').value.trim();
+      const email    = document.getElementById('signup-email').value.trim().toLowerCase();
+      const password = document.getElementById('signup-password').value;
+      const confirm  = document.getElementById('signup-confirm').value;
+
+      // Validation 1: all required fields must be filled.
+      if (!username || !email || !password) {
+        signupError.textContent = 'Please fill in all fields.';
+        signupError.classList.add('visible');
+        return;
+      }
+
+      // Validation 2: passwords must match before we store anything.
+      if (password !== confirm) {
+        signupError.textContent = 'Passwords do not match.';
+        signupError.classList.add('visible');
+        return;
+      }
+
+      // NOTE: Passwords are stored as plain text in localStorage.
+      // This is NOT safe for production — use a proper auth backend in a real app.
+
+      // Load the existing users array (or start with an empty one).
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+
+      // Validation 3: no two accounts can share the same email address.
+      if (users.find(u => u.email === email)) {
+        signupError.textContent = 'An account with this email already exists.';
+        signupError.classList.add('visible');
+        return;
+      }
+
+      // All checks passed: save the new user and log them in automatically.
+      users.push({ username, email, password });
+      localStorage.setItem('users', JSON.stringify(users));
+
+      // currentUser only stores non-sensitive fields — never the password.
+      localStorage.setItem('currentUser', JSON.stringify({ username, email }));
+
+      // Redirect to the home page as a logged-in user.
+      window.location.href = 'index.html';
+    });
+
+    // ── Log In ────────────────────────────────────────────────────────────────
+
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      loginError.classList.remove('visible'); // hide any previous error
+
+      const email    = document.getElementById('login-email').value.trim().toLowerCase();
+      const password = document.getElementById('login-password').value;
+
+      // NOTE: Passwords are stored as plain text in localStorage.
+      // This is NOT safe for production — use a proper auth backend in a real app.
+
+      // Load all registered users and look for one matching both email AND password.
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const user  = users.find(u => u.email === email && u.password === password);
+
+      // If no match is found, show a generic error (intentionally vague for security).
+      if (!user) {
+        loginError.textContent = 'Incorrect email or password.';
+        loginError.classList.add('visible');
+        return;
+      }
+
+      // Credentials matched: store the session (without the password) and redirect.
+      localStorage.setItem('currentUser', JSON.stringify({ username: user.username, email: user.email }));
+      window.location.href = 'index.html';
+    });
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+
+    // Fill the navbar auth slot as soon as the page loads.
+    updateNavbar();
+  </script>
+</body>
+</html>

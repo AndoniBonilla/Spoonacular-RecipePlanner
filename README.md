@@ -100,21 +100,4 @@ RecipePlanner/
 
 Passwords are currently stored as plain text in `localStorage`. This is intentional for this demo project but is **not safe for production**. A real app would use a backend database with hashed passwords (e.g. bcrypt) and session tokens.
 
----
 
-## Screenshots
-
-### Home Page
-![Home page with ingredient search and featured recipes](https://via.placeholder.com/800x450?text=Home+Page)
-
-### Recipe Results
-![Recipe search results grid](https://via.placeholder.com/800x450?text=Recipe+Results)
-
-### Recipe Detail
-![Full recipe detail view](https://via.placeholder.com/800x450?text=Recipe+Detail)
-
----
-
-## License
-
-This project is for educational purposes.
